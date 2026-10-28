@@ -11,16 +11,16 @@ const rateLimit = require('express-rate-limit')
 exports.loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
-  standarHeaders: true,
+  standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiados intentos, verifique en unos minutos'}
 })
 
 //Flujo de solicitudes (usuarios que se conectan a la app)
 exports.apiLimiter = rateLimit({
-  windowMS: 60 * 1000,
+  windowMs: 60 * 1000,
   limit: 120,
-  standarHeaders: true,
+  standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiados solicitudes, intente en uno momento'}
 })

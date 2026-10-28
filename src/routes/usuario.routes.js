@@ -7,3 +7,4 @@ router.post('/' , c.created)
 router.put('/:id' , c.update)
 router.delete('/:id' , c.remove)
 
+module.exports = router

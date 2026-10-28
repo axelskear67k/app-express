@@ -1,75 +1,69 @@
 const db = require('../config/db')
 const { httpError, requireFields, isEmail } = require('../utils')
 
-//lista de campos obligatorios
-//omitir los campos que son NULL
+// Lista de campos obligatorios
 const camposRequeridos = ['apellidos', 'nombres', 'telefono', 'email', 'direccion']
 
-//Evaluamos que el contenido de cada campo sea de tipo cadena
-//(1) arreglo > (2)filter > (3)map > (4) operador ternario
-//filter() : retorna un arreglo que cumpla una condicion
-//map()   : recorre toda la estructura / objeto
+// Función pick corregida (faltaba el return)
 const pick = (body) => {
-  Object.fromEntries(
-    camposRequeridos.filter( (key) => key in body).map(
+  return Object.fromEntries(
+    camposRequeridos.filter((key) => key in body).map(
       (key) => [key, typeof body[key] === 'string' ? body[key].trim() : body[key]]
     )
   )
 }
 
-//Listar
+// Listar
 exports.list = async (req, res) => {
-  res.json(
-    await db("personas")
+  const data = await db("personas")
     .select("id", ...camposRequeridos)
     .orderBy("apellidos")
-  )
+  res.json(data)
 } 
 
-//Buscar
+// Buscar
 exports.get = async (req, res) => {
-  const row = await db("personas").where({id: req.params.id}).first()
-  if(!row) throw httpError(404, 'Persona no encontrada')
-    res.json(row)
+  const row = await db("personas").where({ id: req.params.id }).first()
+  if (!row) throw httpError(404, 'Persona no encontrada')
+  res.json(row)
 }
 
-//registrar
-exports.created = async (req, res) => {
+// Registrar (Cambiado de 'created' a 'create' para que coincida con tus rutas)
+exports.create = async (req, res) => {
   requireFields(req.body, ["apellidos", "nombres"])
-  //Solo es posible validar el email si es obligtatorio
-  if (!isEmail(req.body.email)){
+  
+  if (req.body.email && !isEmail(req.body.email)) {
     throw httpError(400, "Email incorrecto")
   }
 
-  //Insertar (validando que solo envies cadenas)
+  // Insertar validando datos
   const [id] = await db("personas").insert(pick(req.body))
-  res.status(201).json({id, message: 'persona registrada'})
+  res.status(201).json({ id, message: 'persona registrada' })
 }
 
-
-//Actualizar
+// Actualizar
 exports.update = async (req, res) => {
-  requireFields(req.body, ["apellidos","nombres","email"])
+  requireFields(req.body, ["apellidos", "nombres", "email"])
 
-  //Email escrito correctamente
-  if(!isEmail(req.body.email)){
+  if (!isEmail(req.body.email)) {
     throw httpError(400, 'Email incorrecto')
   }
 
-  //Actualizando
-  await db("personas")
-  .where({id: req.params.id})
-  .update(pick(req.body))
+  // Guardamos el resultado del update para verificar si afectó filas (num)
+  const num = await db("personas")
+    .where({ id: req.params.id })
+    .update(pick(req.body))
 
-  if(!num) throw httpError(404,"Persona no encontrada")
-    res.json({message: "Persona Actualizada"})
+  if (!num) throw httpError(404, "Persona no encontrada")
+  res.json({ message: "Persona Actualizada" })
 }
 
+// Eliminar
 exports.remove = async (req, res) => {
   const num = await db("personas")
-  .where({id:req.params.id})
-  .del()
+    .where({ id: req.params.id })
+    .del()
 
-  if(!num) throw httpError(404, "Persona no encontrada")
-    res.json({message: "Persona Eliminada"})
+  if (!num) throw httpError(404, "Persona no encontrada")
+  res.json({ message: "Persona Eliminada" })
 }
